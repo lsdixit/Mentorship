@@ -1,0 +1,58 @@
+---
+title: "Tidal Parr Fish"
+author: "Leela Dixit"
+date: "2/17/2021"
+output: html_document
+---
+Description: Working with Cat with Tidal Parr fish morphometric data.
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+Read in datasets
+```{r}
+fishdata <- read.csv("Tidal_Parr_morphdata.csv")
+fishmetadata <- read.csv("TPS2020 Morphometric Analysis Database.csv")
+library(tidyverse)
+library(stringr)
+```
+cleaning up each data set to prepare to combine them
+```{r}
+fishdata1 <- select(fishdata, -c(Generic_ID, Camera_make, Camera_model, Camera_serial, Image_filesize_bytes, Datetime))
+
+fishmeta1 <- select(fishmetadata, -c(X0, Analysis.Date, Date.Photo.Really.taken, Date.from.PIT.Readout.Photo, Folder, Original.Filename, Comments, Added.to.Eric.folder., NEW.PIT.Read.Filename,Datetime.from.Pit.Reader.log.file))
+```
+Removing fish# and .JPG from IDs so the datasets can be joined together
+```{r}
+#fishdata1 dataset
+fishdata1$fishID = substr(fishdata1$ID,1,16)
+ 
+#fishmeta1 dataset
+fishmeta1$fishID = substr(fishmeta1$New.Fish.Photo.Filename,1,16)
+```
+Combine datasets on fishID
+```{r}
+total <- merge(fishdata1, fishmeta1,by="fishID")
+#clean up combined dataset
+#remove excess columns
+total1 <- select(total, -c(ID, Hex.Tag.Short.ID, Measurement.Event, New.Fish.Photo.Filename, Landmarks_number, Landmarks_confidence, Landmarks_comment))
+
+total1$Date <- substr(total1$fishID, 7, 16)
+#doubles of some photos/dates, should either take average of the multiple measurements, or just choose the first one?
+
+#rename columns
+library(plyr)
+total2 <- rename(total1, c("FLc_mm"="fork_length", "Kp"="Condition_Factor", "Wtp_g"="Weight", "X"="Cage", "X.1"="cage_code"))
+
+#removed duplicates for now
+  #duplicated(total2$fishID)
+  #total2$fishID[duplicated(total2$fishID)]
+total3 <- total2[!duplicated(total2$fishID),]
+
+```
+Graph stuff
+```{r}
+#2 bar plot of beginning/end weights by cage total
+#line plot of each indv. fish over time, maybe color coded by site
+
+```
+
